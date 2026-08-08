@@ -1,5 +1,4 @@
 import time
-import lgpio
 from adafruit_servokit import ServoKit
 from gpiozero import DigitalInputDevice
 
