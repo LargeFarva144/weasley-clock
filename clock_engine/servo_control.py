@@ -40,36 +40,6 @@ class DutyCycleFeedback:
             angle = 360 - ((duty_cycle - self.min_dc) * 360) / (self.max_dc - self.min_dc)
             return angle
 
-    def _on_rising_edge(self):
-        now = time.perf_counter()
-        
-        # Calculate period and duty cycle if we have a valid previous cycle
-        if self._t_rise > 0 and self._t_fall > self._t_rise:
-            period = now - self._t_rise
-            high_time = self._t_fall - self._t_rise
-            
-            if period > 0:
-                dc = high_time / period
-                if 0.01 <= dc <= 0.99:  # Filter out physical noise/glitches
-                    self.duty_cycle = dc
-
-        self._t_rise = now
-
-    def _on_falling_edge(self):
-        self._t_fall = time.perf_counter()
-
-    def test_sensor_high(self, duration_sec: int = 5):
-        for i in range(duration_sec):
-            time.sleep(1)
-            # self._get_duty_cycle()
-
-    def test_duty_cycle(self, duration_sec: int = 5):
-        """Prints the calculated duty cycle percentage every second."""
-        print(f"Measuring duty cycle on GPIO {self.gpio}...")
-        for i in range(duration_sec):
-            time.sleep(1)
-            print(f"Second {i+1}: Duty Cycle = {self.duty_cycle:.6f}%")
-
     def cleanup(self):
         """Safely releases the pin."""
         self.sensor.close()
@@ -114,28 +84,63 @@ class ClockHandController:
         """
         self.servo.throttle = throttle
 
+    def motor_position_control(
+            self,
+            target_angle_degrees: float,
+            tolerance_degrees: float = 0.25,
+            timeout_sec: float = 10.0
+        ):
+        """
+        Sets servo to desired angular position
+        """
+        target_angle_degrees = target_angle_degrees % 360.0
+        t_start = time.time()
+
+        print(f"Moving servo to target angle: {target_angle_degrees:.1f} degrees...")
+
+        while True:
+            try:
+                current_angle_degrees = self.feedback.get_angle_degrees()
+            except RuntimeError as e:
+                self.servo.throttle = 0.0
+                print(f"Error reading position: {e}")
+                break
+
+            error = self._get_shortest_path_error(target_angle_degrees, current_angle_degrees)
+
+            if abs(error) <= tolerance_degrees:
+                self.servo.throttle = 0.0
+                print("Target reached!")
+                break
+
+            if (time.time() - t_start) > timeout_sec:
+                self.servo.throttle = 0.0
+                print("Timeout reached.")
+                break
+
+            calculated_speed = abs(error) * self.kp
+            speed = max(self.min_throttle, min(self.max_throttle, calculated_speed))
+
+            if error < 0:
+                speed = -speed
+
+            self.servo.throttle = speed
+            time.sleep(0.050)
 
 if __name__ == "__main__":
     kit = ServoKit(channels=16)
 
-    # Initialize Clock Hand #0 (Servo Channel 0, Feedback on GPIO 4 / RP1 chip)
-    # hand_0 = ClockHandController(
-    #     servo_kit=kit,
-    #     servo_channel=0,
-    #     feedback_gpio_pin=4,
-    # )
+    hand_0 = ClockHandController(
+        servo_kit=kit,
+        servo_channel=0,
+        feedback_gpio_pin=4,
+        kp=0.001
+    )
 
-    feedback = DutyCycleFeedback(gpio_pin=4)
-
-    try:
-        feedback.get_angle_degrees()
-    finally:
-        feedback.cleanup()
-
-    # hand_0.motor_throttle_control(0.052)
-    # time.sleep(2)
-    # hand_0.motor_throttle_control(0.0)
-    # time.sleep(2)
-    # hand_0.motor_throttle_control(-0.052)
-    # time.sleep(2)
-    # hand_0.motor_throttle_control(0.0)
+    print("Starting position test for hand_0...")
+    hand_0.motor_position_control(target_angle_degrees=90)
+    time.sleep(2)
+    hand_0.motor_position_control(target_angle_degrees=270)
+    time.sleep(2)
+    hand_0.motor_position_control(target_angle_degrees=0)
+    print("Test complete.")
