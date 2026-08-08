@@ -1,0 +1,13 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+
+# IDE settings
+.vscode/
+
+# Environment / Secret files
+.env
