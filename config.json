@@ -1,0 +1,66 @@
+{
+    "mqtt": {
+        "broker": "127.0.0.1",
+        "port": 1883,
+        "user": "weasley_clock",
+        "password": "alohamora"
+    },
+    "locations": {
+        "dentist": 0.0,
+        "home": 27.7,
+        "school": 55.4,
+        "garden": 83.1,
+        "work": 110.8,
+        "forest": 138.5,
+        "holidays": 166.2,
+        "bed": 193.9,
+        "tailor": 221.6,
+        "mortal_peril": 249.3,
+        "quidditch": 277.0,
+        "lost": 304.7,
+        "prison": 332.4
+    },
+    "hands": [{
+            "hand_id": "hand_0",
+            "servo_channel": 0,
+            "feedback_gpio": 4,
+            "angle_offset": 2.3,
+            "name": "Anne"
+        },
+        {
+            "hand_id": "hand_1",
+            "servo_channel": 1,
+            "feedback_gpio": 17,
+            "angle_offset": 6.9,
+            "name": "Nick"
+        },
+        {
+            "hand_id": "hand_2",
+            "servo_channel": 2,
+            "feedback_gpio": 18,
+            "angle_offset": 11.5,
+            "name": "Ethan"
+        },
+        {
+            "hand_id": "hand_3",
+            "servo_channel": 3,
+            "feedback_gpio": 27,
+            "angle_offset": 16.1,
+            "name": "Hannah"
+        },
+        {
+            "hand_id": "hand_4",
+            "servo_channel": 4,
+            "feedback_gpio": 22,
+            "angle_offset": 20.7,
+            "name": "Cami"
+        },
+        {
+            "hand_id": "hand_5",
+            "servo_channel": 5,
+            "feedback_gpio": 23,
+            "angle_offset": 25.3,
+            "name": "none"
+        }
+    ]
+}

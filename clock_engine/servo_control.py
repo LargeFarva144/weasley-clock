@@ -57,8 +57,8 @@ class ClockHandController:
         feedback_gpio_pin: int,
         positive_increases_angle: bool = True,
         kp: float = 0.005,
-        min_throttle: float = 0.06,
-        max_throttle: float = 0.22,
+        min_throttle: float = 0.052,
+        max_throttle: float = 0.06,
     ):
         self.servo = servo_kit.continuous_servo[servo_channel]
         self.feedback = DutyCycleFeedback(gpio_pin=feedback_gpio_pin)
@@ -86,7 +86,7 @@ class ClockHandController:
     def motor_position_control(
             self,
             target_angle_degrees: float,
-            tolerance_degrees: float = 0.25,
+            tolerance_degrees: float = 1.0,
             timeout_sec: float = 10.0
         ):
         """
@@ -136,10 +136,28 @@ if __name__ == "__main__":
         kp=0.001
     )
 
-    print("Starting position test for hand_0...")
+    hand_1 = ClockHandController(
+        servo_kit=kit,
+        servo_channel=1,
+        feedback_gpio_pin=17,
+        kp=0.001
+    )
+
+    hand_2 = ClockHandController(
+        servo_kit=kit,
+        servo_channel=2,
+        feedback_gpio_pin=18,
+        kp=0.001
+    )
+
+    print("Starting position test...")
     hand_0.motor_position_control(target_angle_degrees=90)
-    time.sleep(2)
-    hand_0.motor_position_control(target_angle_degrees=270)
-    time.sleep(2)
+    hand_1.motor_position_control(target_angle_degrees=180)
+    hand_2.motor_position_control(target_angle_degrees=270)
+    hand_0.motor_position_control(target_angle_degrees=180)
+    hand_1.motor_position_control(target_angle_degrees=45)
+    hand_2.motor_position_control(target_angle_degrees=135)
     hand_0.motor_position_control(target_angle_degrees=0)
+    hand_1.motor_position_control(target_angle_degrees=0)
+    hand_2.motor_position_control(target_angle_degrees=0)
     print("Test complete.")
