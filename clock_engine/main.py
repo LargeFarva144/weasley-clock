@@ -25,6 +25,7 @@ MQTT_PASSWORD = config["mqtt"].get("password")
 
 LOCATION_ANGLES = config.get("locations", {})
 HANDS_CONFIG = {hand["hand_id"]: hand for hand in config.get("hands", [])}
+USER_TO_HAND_ID = {hand["ha_user"]: hand["hand_id"] for hand in config.get("hands", []) if "ha_user" in hand}
 
 manager = ClockManager()
 
@@ -50,14 +51,16 @@ def on_connect(client, userdata, flags, rc, properties=None):
 def on_message(client, userdata, msg):
     try:
         topic_parts = msg.topic.split("/")
-        hand_id = topic_parts[2]
+        ha_user = topic_parts[2]
         location_name = msg.payload.decode("utf-8").strip()
 
-        print(f"Received MQTT command for '{hand_id}': Location = '{location_name}'")
+        hand_id = USER_TO_HAND_ID.get(ha_user)
 
-        if hand_id not in HANDS_CONFIG:
-            print(f"Warning: Unknown hand_id '{hand_id}' in MQTT payload.")
+        if not hand_id:
+            print(f"Warning: Unknown Home Assistant user '{ha_user}' in MQTT payload.")
             return
+
+        print(f"Received MQTT command for '{hand_id}': Location = '{location_name}'")
 
         if location_name not in LOCATION_ANGLES:
             print(f"Warning: Location '{location_name}' not defined in config.")

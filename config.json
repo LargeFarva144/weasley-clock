@@ -22,6 +22,7 @@
     },
     "hands": [{
             "hand_id": "hand_0",
+            "ha_user": "anne",
             "servo_channel": 0,
             "feedback_gpio": 4,
             "angle_offset": 2.3,
@@ -29,6 +30,7 @@
         },
         {
             "hand_id": "hand_1",
+            "ha_user": "nick",
             "servo_channel": 1,
             "feedback_gpio": 17,
             "angle_offset": 6.9,
@@ -36,6 +38,7 @@
         },
         {
             "hand_id": "hand_2",
+            "ha_user": "ethan",
             "servo_channel": 2,
             "feedback_gpio": 18,
             "angle_offset": 11.5,
@@ -43,6 +46,7 @@
         },
         {
             "hand_id": "hand_3",
+            "ha_user": "hannah",
             "servo_channel": 3,
             "feedback_gpio": 27,
             "angle_offset": 16.1,
@@ -50,6 +54,7 @@
         },
         {
             "hand_id": "hand_4",
+            "ha_user": "cami",
             "servo_channel": 4,
             "feedback_gpio": 22,
             "angle_offset": 20.7,
@@ -57,6 +62,7 @@
         },
         {
             "hand_id": "hand_5",
+            "ha_user": "none",
             "servo_channel": 5,
             "feedback_gpio": 23,
             "angle_offset": 25.3,
