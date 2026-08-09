@@ -55,18 +55,48 @@ class ClockManager:
 
         while self.running:
             try:
-                target_angle = q.get(timeout=1.0)
+                command = q.get(timeout=1.0)
             except queue.Empty:
                 continue
 
-            if target_angle is None:
+            if command is None:
                 q.task_done()
                 break
 
-            print(f"[{hand_id}] Starting to move to {target_angle:.1f} degrees...")
-            controller.motor_position_control(target_angle)
-            self.current_targets[hand_id] = target_angle
+            if isinstance(command, (int, float)):
+                controller.motor_position_control(command)
+
+            elif isinstance(command, tuple):
+                cmd_type, value = command
+
+                if cmd_type == "THROTTLE":
+                    controller.motor_throttle_control(value)
+
+                elif cmd_type == "POSITION":
+                    controller.motor_position_control(value)
+
             q.task_done()
+
+    def set_hand_throttle(self, hand_id: str, throttle: float, override_pending: bool = True):
+        """
+        Commands a hand to move at a target throttle asynchronously.
+        If override_pending is True, drops older unprocessed commands in queue.
+        """
+        if hand_id not in self.hands:
+            raise KeyError(f"Hand '{hand_id}' is not registered with ClockManager.")
+        
+        q = self.queues[hand_id]
+        
+        if override_pending:
+            while not q.empty():
+                try:
+                    q.get_nowait()
+                    q.task_done()
+                except queue.Empty:
+                    break
+
+        q.put(("THROTTLE", throttle))
+            
 
     def set_hand_angle(self, hand_id: str, target_angle: float, override_pending: bool = True):
         """
@@ -86,7 +116,22 @@ class ClockManager:
                 except queue.Empty:
                     break
 
-        q.put(target_angle % 360.0)
+        q.put(("POSITION", target_angle % 360.0))
+
+    def stop_all_hands(self):
+        """Stops all hand motors immediately."""
+        for hand_id in self.hands:
+            q = self.queues[hand_id]
+            
+            while not q.empty():
+                try:
+                    q.get_nowait()
+                    q.task_done()
+                except queue.Empty:
+                    break
+            
+            q.put(("THROTTLE", 0.0))
+            
 
     def get_current_angle(self, hand_id: str) -> Optional[float]:
         """

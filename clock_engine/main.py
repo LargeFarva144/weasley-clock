@@ -1,7 +1,10 @@
 import json
 import sys
+import random
 from pathlib import Path
+import time
 import paho.mqtt.client as mqtt
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
@@ -30,15 +33,32 @@ USER_TO_HAND_ID = {hand["ha_user"]: hand["hand_id"] for hand in config.get("hand
 manager = ClockManager()
 
 for hand_id, hand_info in HANDS_CONFIG.items():
-    if hand_info['name'] != "none":
-        print(
-            f"Registering '{hand_info['name']}' ({hand_id}) on channel {hand_info['servo_channel']}, GPIO {hand_info['feedback_gpio']}..."
-        )
-        manager.register_hand(
-            hand_id=hand_id,
-            servo_channel=hand_info["servo_channel"],
-            feedback_gpio_pin=hand_info["feedback_gpio"],
-        )
+    print(
+        f"Registering '{hand_info['name']}' ({hand_id}) on channel {hand_info['servo_channel']}, GPIO {hand_info['feedback_gpio']}..."
+    )
+    manager.register_hand(
+        hand_id=hand_id,
+        servo_channel=hand_info["servo_channel"],
+        feedback_gpio_pin=hand_info["feedback_gpio"],
+    )
+
+def run_startup_routine(clock_manager: ClockManager, hands_config):
+    print("Initiating clock startup routine...")
+
+    speed_options = [-0.1, -0.08, -0.06, 0.06, 0.08, 0.1]
+
+    for hand_id in HANDS_CONFIG.keys():
+        throttle = random.choice(speed_options)
+        clock_manager.set_hand_throttle(hand_id, throttle)
+
+    time.sleep(6.0)
+
+    manager.stop_all_hands()
+
+    time.sleep(2)
+
+    for hand_id in HANDS_CONFIG.keys():
+        clock_manager.set_hand_angle(hand_id, 0.0)
 
 def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
@@ -81,6 +101,7 @@ def on_message(client, userdata, msg):
         print(f"Error processing MQTT message: {e}")
 
 if __name__ == "__main__":
+    run_startup_routine(manager, HANDS_CONFIG)
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
     if MQTT_USER and MQTT_PASSWORD:
